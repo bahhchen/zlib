@@ -176,9 +176,23 @@ endif()
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
     install(TARGETS zlib zlibstatic
+        EXPORT zlib_exported_targets
         RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
+
+    # Generate a "zlib-targets.cmake" file in the build tree that can be
+    # included by outside projects to import targets from the build tree.
+    export(EXPORT zlib_exported_targets
+           NAMESPACE zlib::
+           FILE zlib-targets.cmake)
+
+    # Generate and install a separate "zlib-targets.cmake" file that can be
+    # included by outside projects to import targets from the installation tree.
+    install(EXPORT zlib_exported_targets
+            NAMESPACE zlib::
+            FILE zlib-targets.cmake
+            DESTINATION ${INSTALL_LIB_DIR}/cmake/zlib)
 endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
