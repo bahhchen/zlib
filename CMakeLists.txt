@@ -63,18 +63,14 @@ if(MSVC)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-    # If we're doing an out of source build and the user has a zconf.h
-    # in their source tree...
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h)
-        message(STATUS "Renaming")
-        message(STATUS "    ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h")
-        message(STATUS "to 'zconf.h.included' because this file is included with zlib")
-        message(STATUS "but CMake generates it automatically in the build directory.")
-        file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.included)
-  endif()
-endif()
-
+# 上游此处原本会把源码树里的 zconf.h 重命名为 zconf.h.included，逼迫 zlib.h 的
+# #include "zconf.h"（引号形式，总是先在同目录找）转而命中下面 configure_file
+# 生成到 build 目录的版本。这个改名是对本仓库 vendored 子模块的破坏性写入，
+# 每次 configure 都会污染 thirdparty/zlib 的工作区。本工程未设置 Z_PREFIX，
+# Z_HAVE_UNISTD_H 在 Linux 上无论走哪条路径最终都会被下面的
+# `_LARGEFILE64_SOURCE && !_WIN32` 兜底逻辑定义，Windows 上两者都不会定义，
+# 因此保留源码树里原生的 zconf.h 与用 configure_file 生成的版本对本工程等价，
+# 不再需要这步改名。
 set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
 		${ZLIB_PC} @ONLY)
